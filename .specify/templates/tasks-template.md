@@ -69,6 +69,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T007 Create base models/entities that all stories depend on
 - [ ] T008 Configure error handling and logging infrastructure
 - [ ] T009 Setup environment configuration management
+- [ ] T009a [P] Derive HTTP contracts from OpenAPI and messaging contracts from AsyncAPI before implementation
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -96,6 +97,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
 - [ ] T016 [US1] Add validation and error handling
 - [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T017a [US1] Align controllers, DTOs, and listeners with OpenAPI/AsyncAPI specifications
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -119,6 +121,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T021 [US2] Implement [Service] in src/services/[service].py
 - [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
 - [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T023a [US2] Ensure payment status cannot transition to PAGO until comprovante.gerado.topic is consumed successfully
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -141,6 +144,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
 - [ ] T027 [US3] Implement [Service] in src/services/[service].py
 - [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T028a [US3] Implement 3-attempt retry ceiling and Problema fallback for Faturas retry exhaustion
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -159,8 +163,11 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests to maintain or improve coverage threshold in tests/unit/
 - [ ] TXXX Security hardening
+- [ ] TXXX Add BCrypt password hashing coverage for Auth/API Gateway and Flyway seed scripts
 - [ ] TXXX Validate Jacoco coverage threshold (>= 80%) in CI pipeline
 - [ ] TXXX Validate trace_id propagation, MDC logging fields, and DLQ/DLT metrics instrumentation
+- [ ] TXXX Validate OpenAPI/AsyncAPI contract drift detection in CI
+- [ ] TXXX Verify SAGA finality rule: no synchronous PAGO persistence before comprovante.gerado.topic consumption
 - [ ] TXXX Run quickstart.md validation
 
 ---

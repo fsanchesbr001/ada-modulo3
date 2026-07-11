@@ -45,6 +45,10 @@
   messaging dependencies in domain).
 - [ ] Clean Code/SOLID compliance strategy is documented (naming, constants,
   single-responsibility boundaries).
+- [ ] OpenAPI is the source of truth for every HTTP controller, endpoint,
+  request/response DTO, and generated/validated REST contract.
+- [ ] AsyncAPI is the source of truth for every producer, consumer, listener,
+  topic, queue, and payload schema.
 - [ ] Testing strategy includes unit + integration tests for all endpoints and
   PACT coverage for HTTP and messaging contracts.
 - [ ] Coverage plan enforces Jacoco >= 80% in CI/CD.
@@ -56,6 +60,12 @@
   persistence requirement for Receipts/Comprovantes where applicable.
 - [ ] Messaging resilience defines RetryableTopic and DLQ/DLT behavior for
   external-system Kafka consumers.
+- [ ] SAGA plan prohibits synchronous PAGO persistence before successful
+  consumption of comprovante.gerado.topic and defines the Problema fallback.
+- [ ] Retry policy enforces a hard limit of 3 attempts for cache-aside, Kafka,
+  and Faturas retry workers.
+- [ ] Security plan enforces BCrypt for password handling in Auth/API Gateway
+  and Flyway seed data.
 - [ ] Internal security plan enforces JWT validation for service-to-service
   Authorization: Bearer propagation.
 

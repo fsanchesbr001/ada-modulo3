@@ -96,11 +96,17 @@
 - **FR-007**: System MUST define traceability requirements, including trace_id generation at entry points and propagation through synchronous and asynchronous interactions.
 - **FR-008**: System MUST define observability requirements for structured logging, MDC keys, and business/reliability metrics.
 - **FR-009**: System MUST define security requirements for JWT validation in internal service communication.
+- **FR-010**: System MUST validate every HTTP endpoint, controller, and DTO against an authoritative OpenAPI specification.
+- **FR-011**: System MUST validate every messaging producer, consumer, listener, topic, queue, and payload schema against an authoritative AsyncAPI specification.
+- **FR-012**: System MUST prevent synchronous persistence of payment status PAGO before successful consumption of comprovante.gerado.topic.
+- **FR-013**: System MUST enforce a hard maximum of 3 retry attempts for cache-aside Redis lookups, Kafka retry policies, and Faturas retry workers.
+- **FR-014**: System MUST move failed Faturas transactions to status Problema after retry exhaustion and route them to Backoffice handling.
+- **FR-015**: System MUST use BCrypt for password hashing in Auth/API Gateway and Flyway seed data, with no plaintext password persistence.
 
 *Example of marking unclear requirements:*
 
-- **FR-010**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-011**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+- **FR-016**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
+- **FR-017**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
 ### Contract and Event Requirements *(mandatory for distributed features)*
 

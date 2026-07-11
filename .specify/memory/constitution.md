@@ -1,12 +1,16 @@
 <!--
 Sync Impact Report
-- Version change: template -> 1.0.0
+- Version change: 1.0.0 -> 1.1.0
 - Modified principles:
 	- Principle 1 placeholder -> I. Bounded Contexts + Hexagonal Isolation
 	- Principle 2 placeholder -> II. Clean Code + SOLID + Explicit Domain Language
 	- Principle 3 placeholder -> III. Test and Contract Quality Gates (NON-NEGOTIABLE)
 	- Principle 4 placeholder -> IV. End-to-End Observability and Trace Propagation
 	- Principle 5 placeholder -> V. Data Integrity, Messaging Resilience, and Security
+- Added principles:
+	- VI. Specification-First Contracts
+	- VII. SAGA Finality and Fail-Fast Resilience
+	- VIII. BCrypt Credential Hygiene
 - Added sections:
 	- Engineering Baseline
 	- Delivery Workflow and Enforcement Gates
@@ -81,11 +85,43 @@ headers.
 Rationale: resilient messaging, controlled data evolution, and uniform token
 validation are mandatory for correctness and secure service-to-service trust.
 
+### VI. Specification-First Contracts
+Controllers, DTOs, and listeners MUST be derived from or validated against the
+authoritative specifications. Every HTTP endpoint MUST be validated against its
+OpenAPI contract, and every message producer or consumer MUST be validated
+against its AsyncAPI contract. Contract artifacts are the source of truth;
+invented endpoints, fields, routing keys, topics, or listener payload shapes are
+forbidden. Any contract drift MUST fail the build until the implementation and
+specification are realigned.
+Rationale: specification-first development prevents undocumented behavior and
+keeps generated code aligned with system-level contracts.
+
+### VII. SAGA Finality and Fail-Fast Resilience
+The Payments/SAGA and Invoices/Faturas services are forbidden from marking a
+transaction as PAGO synchronously after gateway mock processing. The PAGO state
+MUST only be persisted after successful consumption of the Kafka topic
+comprovante.gerado.topic. Any retry policy used for Redis cache-aside lookups,
+Kafka @RetryableTopic consumers, or Faturas retry workers MUST cap attempts at
+3. After retry exhaustion, Faturas MUST transition the transaction to Problema
+and route it to Backoffice for manual management.
+Rationale: payment finality must follow confirmed receipt processing, and a
+strict retry ceiling prevents hidden infinite loops in critical money flows.
+
+### VIII. BCrypt Credential Hygiene
+The Auth service in the API Gateway layer and Flyway data-seeding scripts MUST
+never persist or transmit plaintext passwords. BCrypt hashing is mandatory for
+all password material at rest and during seed generation, and plaintext secrets
+MUST NOT appear in logs, fixtures, migration files, or test data.
+Rationale: password handling must be uniformly hardened across runtime and seed
+paths to prevent accidental disclosure and weak credential storage.
+
 ## Engineering Baseline
 
 - Platform baseline MUST be Java 21 and Spring Boot 3.x.
 - Monorepo modules MUST expose clear ownership, bounded-context boundaries, and
 	versioned contracts.
+- OpenAPI and AsyncAPI artifacts MUST be treated as authoritative contract
+	sources for endpoints and message flows.
 - Public contracts (HTTP APIs, events, message schemas) MUST be backward-
 	compatible by default; breaking changes require explicit migration plans.
 - Configuration, secrets handling, and environment overrides MUST be externalized
@@ -98,14 +134,16 @@ validation are mandatory for correctness and secure service-to-service trust.
 - `/speckit.specify` output MUST state bounded context impact, synchronous and
 	asynchronous contracts, and traceability requirements.
 - `/speckit.plan` MUST include a Constitution Check section that verifies all
-	five core principles and maps them to implementation decisions.
+	eight core principles and maps them to implementation decisions.
 - `/speckit.tasks` MUST include mandatory tasks for unit tests, integration
-	tests, PACT contracts, trace propagation, metrics, Flyway migrations, and
-	security validation.
+	tests, PACT contracts, OpenAPI/AsyncAPI alignment, trace propagation, metrics,
+	Flyway migrations, retry ceilings, and security validation.
 - Pull requests MUST include evidence for: test execution, coverage >= 80%,
 	contract test status, and observability instrumentation updates.
 - Code reviews MUST reject changes that leak infrastructure concerns into the
-	domain layer or bypass retry/DLQ and JWT validation requirements.
+	domain layer, bypass retry/DLQ or retry-ceiling requirements, introduce PAGO
+	state changes before comprovante.gerado.topic consumption, or skip JWT/
+	BCrypt validation requirements.
 
 ## Governance
 
@@ -130,4 +168,4 @@ Compliance review expectations:
 	resilience, data migration, and JWT validation compliance.
 - Non-compliant changes MUST be remediated before merge.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-11 | **Last Amended**: 2026-07-11
+**Version**: 1.1.0 | **Ratified**: 2026-07-11 | **Last Amended**: 2026-07-11
