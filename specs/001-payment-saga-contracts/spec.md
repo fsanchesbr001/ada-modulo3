@@ -40,7 +40,8 @@ A financial operator creates batches of faturas, requests payment processing for
 2. **Given** an existing fatura, **When** the client submits `POST /api/v1/faturas/{id}/pagamentos`, **Then** the fatura is placed in `SOLICITADO` in Redis and a payment event is dispatched.
 3. **Given** a fatura request and a Redis miss, **When** the client submits `GET /api/v1/faturas/{id}`, **Then** the service falls back to MySQL and returns the current state.
 4. **Given** a fatura that is in `RECUSADO`, **When** the scheduled retry worker runs every 2 minutes, **Then** the retry counter increments and the flow is retried until a maximum of 3 attempts.
-5. **Given** a fatura has exhausted 3 retries, **When** the scheduled worker processes it again, **Then** the fatura moves to `Problema`.
+5. **Given** a fatura reaches the third failed retry attempt, **When** the retry ceiling is evaluated, **Then** the fatura immediately moves to `PROBLEMA` without a fourth processing pass.
+6. **Given** a fatura has moved to `PROBLEMA`, **When** the critical-state routing flow runs, **Then** the case is forwarded to Backoffice for manual management through the declared asynchronous contract.
 
 ---
 
@@ -98,11 +99,12 @@ The notifications service consumes the receipt-generated event stream and mainta
 - A login request with invalid credentials must not return a token.
 - A downstream internal call without a valid propagated JWT must be rejected by contract.
 - A fatura read when Redis is empty must fall back to MySQL without changing the business state.
-- A `RECUSADO` fatura must stop retrying after the third scheduled attempt and move to `Problema`.
+- A `RECUSADO` fatura must stop retrying after the third scheduled attempt and move to `PROBLEMA`.
 - A payment number of `0`, `4`, or `9` must always route to `RECUSADO` in the mock gateway flow.
 - A receipt request must still return `202 Accepted` even though persistence and downstream messaging are asynchronous.
 - A receipt GET request must return `404` after the retry ceiling is exhausted.
 - A receipt-generated message that cannot be processed after 3 attempts must appear in the DLT for analysis.
+- A fatura routed to `PROBLEMA` must emit the Backoffice routing message exactly once per exhausted lifecycle.
 
 ## Requirements *(mandatory)*
 
@@ -125,14 +127,15 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **FR-015**: The faturas service MUST expose `GET /api/v1/faturas/{id}` and MUST read through Redis with fallback to MySQL.
 - **FR-016**: The faturas scheduled worker MUST run every 2 minutes to reprocess faturas in `RECUSADO`.
 - **FR-017**: The faturas scheduled worker MUST increment a retry counter for each re-execution.
-- **FR-018**: The faturas scheduled worker MUST stop after 3 retries and move the fatura to `Problema`.
+- **FR-018**: The faturas scheduled worker MUST stop after 3 retries and move the fatura to `PROBLEMA`.
+- **FR-018A**: Faturas moved to `PROBLEMA` MUST be routed to Backoffice for manual management through an asynchronous contract.
 - **FR-019**: The payments service MUST consume the `PAGAR` event.
 - **FR-020**: The payments service MUST expose `POST /api/v1/pagamentos/mock/gateway/lote` for mock gateway processing.
 - **FR-021**: The mock gateway flow MUST route payment numbers `0`, `4`, and `9` to `RECUSADO` and compensation.
 - **FR-022**: The mock gateway flow MUST leave all other payment numbers in `PROCESSANDO` temporarily.
 - **FR-023**: The payments service MUST persist `PAGO` only after successful asynchronous confirmation from `comprovante.gerado.topic`.
 - **FR-024**: The comprovantes service MUST expose `POST /api/v1/comprovantes` and MUST return `202 Accepted` with a UUID v4 identifier.
-- **FR-025**: The comprovantes service MUST enqueue a `ComprovanteQueueMessage` on a Direct exchange path defined by the messaging contract.
+- **FR-025**: The comprovantes service MUST enqueue a `ComprovanteQueueMessage` on a Direct exchange path defined in `.specs/asyncapi/comprovante-gerado.yaml`.
 - **FR-026**: The comprovantes consumer MUST persist the full payload in MySQL JSON column `payload_notificacao_completo`.
 - **FR-027**: The comprovantes service MUST expose `GET /api/v1/comprovantes/{id}` using cache-aside behavior with a 24-hour TTL.
 - **FR-028**: The comprovantes GET flow MUST retry up to 3 attempts before returning `404`.
@@ -161,12 +164,14 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **PAGAR event**: consumed by ms-pagamentos; the contract must define the payload, correlation fields, and trace propagation requirements.
 - **Receipt generation stream**: the receipts flow must publish into `comprovante.gerado.topic`; ms-pagamentos depends on its successful consumption before persisting `PAGO`.
 - **Notifications consumer**: ms-notificacoes consumes `comprovante.gerado.topic` with the full JSON payload and must route exhausted retries to `comprovante.gerado.DLT`.
+- **Notifications dead-letter stream**: `comprovante.gerado.DLT` carries the failed notification payload plus failure metadata and is consumed for operational analysis.
 - **RabbitMQ receipt work item**: ms-comprovantes must publish `ComprovanteQueueMessage` on the Direct exchange path defined in AsyncAPI.
+- **Problema routing event**: ms-faturas publishes the exhausted-fatura payload to Backoffice, and ms-backoffice consumes it as the manual-management intake contract.
 
 #### Contract test scope
 
 - HTTP PACT coverage must validate the gateway login contract, faturas endpoints, payments mock gateway route, and comprovantes endpoints.
-- Messaging PACT coverage must validate the `PAGAR` event, the receipt generation stream, and the notifications consumer contract.
+- Messaging PACT coverage must validate the `PAGAR` event, the receipt generation stream, the notifications consumer and DLT contracts, and the Backoffice routing contract.
 - OpenAPI and AsyncAPI artifacts are the source of truth for endpoint paths, payloads, headers, events, queue semantics, and versioning expectations.
 
 ### Observability and Operations Requirements *(mandatory)*
@@ -181,11 +186,12 @@ The notifications service consumes the receipt-generated event stream and mainta
 ### Key Entities *(include if feature involves data)*
 
 - **Authentication Session**: represents a successful login and the issued JWT used for downstream propagation.
-- **Fatura**: represents the immutable financial record in `db_faturas`, including state transitions such as `PENDENTE`, `SOLICITADO`, `RECUSADO`, and `Problema`.
+- **Fatura**: represents the immutable financial record in `db_faturas`, including state transitions such as `PENDENTE`, `SOLICITADO`, `RECUSADO`, and `PROBLEMA`.
 - **Pagamento**: represents the payment lifecycle managed by ms-pagamentos, including `PROCESSANDO`, `RECUSADO`, and `PAGO`.
 - **Comprovante**: represents the receipt artifact created from the standard PDF payload and retrievable by UUID.
 - **Comprovante Queue Message**: represents the queued work item used to process receipt creation and downstream notification data.
 - **Trace Context**: represents the `trace_id` and related correlation data that must travel through the entire flow.
+- **Problema Fatura Record**: represents the exhausted retry case handed to Backoffice for manual management and audit.
 
 ## Success Criteria *(mandatory)*
 
@@ -194,15 +200,15 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **SC-001**: 100% of the documented REST endpoints are captured in OpenAPI and covered by contract tests before merge.
 - **SC-002**: 100% of the documented async contracts are captured in AsyncAPI and covered by messaging contract tests before merge.
 - **SC-003**: In end-to-end flow validation, no payment reaches `PAGO` before successful consumption of `comprovante.gerado.topic`.
-- **SC-004**: Every retry-bearing flow stops at 3 attempts or fewer, and exhausted faturas are visible in `Problema` while exhausted receipt lookups return `404`.
+- **SC-004**: Every retry-bearing flow stops at 3 attempts or fewer, and exhausted faturas are visible in `PROBLEMA` while exhausted receipt lookups return `404`.
 - **SC-005**: At least 80% code coverage is maintained across the feature scope.
 - **SC-006**: 100% of generated logs and published messages in the covered flows carry a `trace_id`.
 - **SC-007**: 100% of seeded credentials are stored as BCrypt hashes, with no plaintext password material in seed artifacts.
+- **SC-008**: 100% of faturas that exhaust the retry ceiling are routed to Backoffice with a contract-compliant payload and trace correlation.
 
 ## Assumptions
 
 - The exact request and response field sets for each endpoint will be finalized in the authoritative OpenAPI artifacts, but the endpoint names, auth requirements, and lifecycle behavior in the SDD are fixed.
 - The standard PDF payload from Module 3 is reused as the receipt input contract, and the system preserves the full payload where the SDD requires it.
 - The exact queue and exchange names beyond the required Direct exchange path and the named Kafka topics will be captured in AsyncAPI.
-- Backoffice handling for faturas in `Problema` follows the existing manual management flow in the repository context.
 - The gateway-issued JWT is the token used for downstream internal communication unless the contract explicitly says otherwise.

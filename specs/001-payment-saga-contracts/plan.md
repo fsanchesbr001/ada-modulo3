@@ -11,9 +11,14 @@
 Build the distributed PIX payment monorepo in four strictly ordered phases so that contracts and infrastructure exist before downstream service code depends on them.
 
 - **Phase 1 - Foundation of shared infrastructure and contracts**: provision local container infrastructure, isolate OpenAPI and AsyncAPI artifacts under `.specs/`, and refactor the build into a parent monorepo with shared dependency management for Spring Boot 3.x, PACT, Testcontainers, and Jacoco.
-- **Phase 2 - Edge security and entry domain**: implement the API Gateway auth boundary, BCrypt-based Flyway seed for `db_auth`, and the `ms-faturas` bounded context with MySQL truth, Redis state projection, and the 3-attempt `RECUSADO -> Problema` worker.
+- **Phase 2 - Edge security, entry domain, and exhausted-retry escalation**: implement the API Gateway auth boundary, BCrypt-based Flyway seed for `db_auth`, the `ms-faturas` bounded context with MySQL truth, Redis state projection, and the 3-attempt `RECUSADO -> PROBLEMA` worker, plus the minimal `ms-backoffice` routing slice required to capture exhausted retries.
 - **Phase 3 - Transactionality, throughput, and active contracts**: implement `ms-comprovantes` high-throughput async ingestion, RabbitMQ consumer persistence with JSON payload retention, cache-aside retrieval, and the `ms-pagamentos` SAGA orchestrator with the hard prohibition on synchronous `PAGO` finalization.
-- **Phase 4 - Alerts, critical handling, and automated delivery**: implement `ms-notificacoes`, `ms-backoffice`, and GitHub Actions CI/CD with staged contract verification, Testcontainers-backed integration tests, and multi-stage Docker image builds.
+- **Phase 4 - Alerts, operational visibility, and automated delivery**: implement `ms-notificacoes` and GitHub Actions CI/CD with staged contract verification, Testcontainers-backed integration tests, multi-stage Docker image builds, and the remaining observability dashboards.
+
+This feature also requires two first-class design outputs before tasks are generated:
+
+- `data-model.md` defines relational schemas, Redis keyspaces, lifecycle states, and event payload structures for each bounded context.
+- `research.md` records observability decisions, including mandatory Micrometer metrics, Prometheus scrape targets, Grafana dashboard design, and trace/log correlation strategy.
 
 The existing root build is currently a single-module Spring Boot application using Spring Boot 4.1.0. This feature plan realigns the repository to a Spring Boot 3.x Java 21 monorepo because that is a mandatory platform constraint from the project constitution and the approved scope.
 
@@ -36,6 +41,10 @@ The existing root build is currently a single-module Spring Boot application usi
 **Constraints**: OpenAPI and AsyncAPI are authoritative, all services follow Hexagonal Architecture, JWT TTL is fixed at 20 minutes, `trace_id` propagation is mandatory, retry ceilings are hard-capped at 3, `PAGO` cannot be persisted before `comprovante.gerado.topic` confirmation, and BCrypt is mandatory for seeded and runtime credentials
 
 **Scale/Scope**: 6 bounded contexts (`api-gateway`, `ms-faturas`, `ms-pagamentos`, `ms-comprovantes`, `ms-notificacoes`, `ms-backoffice`) plus shared contract, infrastructure, observability, and CI/CD assets
+
+**Data Model Scope**: logical MySQL schemas for authentication, faturas truth, pagamentos orchestration state, comprovantes retention, and backoffice audit; Redis keyspaces for hot reads and transient workflow state; canonical event payloads for `PAGAR`, `ComprovanteQueueMessage` and `comprovante.gerado.topic` in `.specs/asyncapi/comprovante-gerado.yaml`, plus `comprovante.gerado.DLT`
+
+**Observability Scope**: mandatory trace propagation, structured JSON logs, Prometheus metrics, and Grafana dashboards for gateway auth traffic, faturas lifecycle, payment SAGA health, comprovantes throughput/cache behavior, and notification retry/DLT visibility
 
 ## Constitution Check
 
@@ -62,7 +71,7 @@ The existing root build is currently a single-module Spring Boot application usi
 - [x] Messaging resilience defines RetryableTopic and DLQ/DLT behavior for
   external-system Kafka consumers.
 - [x] SAGA plan prohibits synchronous PAGO persistence before successful
-  consumption of comprovante.gerado.topic and defines the Problema fallback.
+  consumption of comprovante.gerado.topic and defines the PROBLEMA fallback.
 - [x] Retry policy enforces a hard limit of 3 attempts for cache-aside, Kafka,
   and Faturas retry workers.
 - [x] Security plan enforces BCrypt for password handling in Auth/API Gateway
@@ -88,8 +97,10 @@ specs/001-payment-saga-contracts/
 │   │   └── ms-comprovantes.yaml
 │   └── asyncapi/
 │       ├── pagar-event.yaml
-│       ├── comprovante-gerado.yaml
-│       └── notificacoes-consumer.yaml
+│       ├── comprovante-gerado.yaml      # owns ComprovanteQueueMessage and comprovante.gerado.topic
+│       ├── comprovante-gerado-dlt.yaml
+│       ├── notificacoes-consumer.yaml
+│       └── problema-fatura-routing.yaml
 └── tasks.md
 ```
 
@@ -105,7 +116,9 @@ specs/001-payment-saga-contracts/
 └── asyncapi/
     ├── pagar-event.yaml
     ├── comprovante-gerado.yaml
-    └── notificacoes-consumer.yaml
+  ├── comprovante-gerado-dlt.yaml
+  ├── notificacoes-consumer.yaml
+  └── problema-fatura-routing.yaml
 
 .github/
 └── workflows/
@@ -188,6 +201,16 @@ infra/
 │   ├── docker-compose.yml
 │   └── mysql/init/
 │       └── 00-create-schemas.sql
+├── grafana/
+│   ├── provisioning/
+│   │   ├── dashboards/
+│   │   └── datasources/
+│   └── dashboards/
+│       ├── gateway-auth-overview.json
+│       ├── faturas-lifecycle.json
+│       ├── pagamentos-saga.json
+│       ├── comprovantes-throughput.json
+│       └── notificacoes-dlt.json
 └── github-actions/
 
 libs/
@@ -198,7 +221,7 @@ libs/
 pom.xml
 ```
 
-**Structure Decision**: Adopt a Maven parent monorepo with `pom.xml` at the root using `packaging=pom`, six application modules under `apps/`, and only technical shared libraries under `libs/`. Domain code stays inside each bounded context and is never shared as a common business library. Contracts are isolated under `.specs/` before Java implementation starts. Infrastructure manifests live under `infra/`. Delivery is chronological: Phase 1 provisions containers, contracts, and the parent build; Phase 2 unlocks authentication and `ms-faturas`; Phase 3 unlocks `ms-comprovantes` and `ms-pagamentos`; Phase 4 unlocks `ms-notificacoes`, `ms-backoffice`, and the full CI/CD pipeline.
+**Structure Decision**: Adopt a Maven parent monorepo with `pom.xml` at the root using `packaging=pom`, six application modules under `apps/`, and only technical shared libraries under `libs/`. Domain code stays inside each bounded context and is never shared as a common business library. Contracts are isolated under `.specs/` before Java implementation starts. Infrastructure manifests live under `infra/`, including Grafana provisioning and dashboard JSON. Delivery is chronological: Phase 1 provisions containers, contracts, parent build, and observability baseline; Phase 2 unlocks authentication, `ms-faturas`, and the minimal `ms-backoffice` exhausted-retry intake slice; Phase 3 unlocks `ms-comprovantes` and `ms-pagamentos`; Phase 4 unlocks `ms-notificacoes`, Grafana dashboards, and the full CI/CD pipeline.
 
 ## Complexity Tracking
 

@@ -1,27 +1,19 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
+- Version change: 1.1.0 -> 1.1.1
 - Modified principles:
-	- Principle 1 placeholder -> I. Bounded Contexts + Hexagonal Isolation
-	- Principle 2 placeholder -> II. Clean Code + SOLID + Explicit Domain Language
-	- Principle 3 placeholder -> III. Test and Contract Quality Gates (NON-NEGOTIABLE)
-	- Principle 4 placeholder -> IV. End-to-End Observability and Trace Propagation
-	- Principle 5 placeholder -> V. Data Integrity, Messaging Resilience, and Security
+- VII. SAGA Finality and Fail-Fast Resilience -> VII. SAGA Finality and Fail-Fast Resilience
 - Added principles:
-	- VI. Specification-First Contracts
-	- VII. SAGA Finality and Fail-Fast Resilience
-	- VIII. BCrypt Credential Hygiene
+	- None
 - Added sections:
-	- Engineering Baseline
-	- Delivery Workflow and Enforcement Gates
+	- None
 - Removed sections:
 	- None
 - Templates requiring updates:
-	- .specify/templates/plan-template.md: ✅ updated
-	- .specify/templates/spec-template.md: ✅ updated
-	- .specify/templates/tasks-template.md: ✅ updated
-	- .specify/templates/commands/*.md: ⚠ pending (directory not present)
-	- README.md: ✅ reviewed (no constitution references to sync)
+	- .specify/templates/plan-template.md: ✅ no changes required
+	- .specify/templates/spec-template.md: ✅ no changes required
+	- .specify/templates/tasks-template.md: ✅ no changes required
+	- README.md: ✅ no changes required
 - Deferred TODOs:
 	- None
 -->
@@ -102,7 +94,7 @@ transaction as PAGO synchronously after gateway mock processing. The PAGO state
 MUST only be persisted after successful consumption of the Kafka topic
 comprovante.gerado.topic. Any retry policy used for Redis cache-aside lookups,
 Kafka @RetryableTopic consumers, or Faturas retry workers MUST cap attempts at
-3. After retry exhaustion, Faturas MUST transition the transaction to Problema
+3. After retry exhaustion, Faturas MUST transition the transaction to PROBLEMA
 and route it to Backoffice for manual management.
 Rationale: payment finality must follow confirmed receipt processing, and a
 strict retry ceiling prevents hidden infinite loops in critical money flows.
@@ -168,4 +160,4 @@ Compliance review expectations:
 	resilience, data migration, and JWT validation compliance.
 - Non-compliant changes MUST be remediated before merge.
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-11 | **Last Amended**: 2026-07-11
+**Version**: 1.1.1 | **Ratified**: 2026-07-11 | **Last Amended**: 2026-07-11
