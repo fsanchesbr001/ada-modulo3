@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: api-gateway
+    static_configs:
+      - targets: ["host.docker.internal:8080"]
+  - job_name: ms-faturas
+    static_configs:
+      - targets: ["host.docker.internal:8082"]
+  - job_name: ms-pagamentos
+    static_configs:
+      - targets: ["host.docker.internal:8083"]
+  - job_name: ms-comprovantes
+    static_configs:
+      - targets: ["host.docker.internal:8084"]
+  - job_name: ms-notificacoes
+    static_configs:
+      - targets: ["host.docker.internal:8085"]
+  - job_name: ms-backoffice
+    static_configs:
+      - targets: ["host.docker.internal:8086"]
