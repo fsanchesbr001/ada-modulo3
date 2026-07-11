@@ -72,6 +72,7 @@
 - [ ] T021 [P] [US2] Add OpenAPI contract validation for `POST /api/v1/faturas/lote`, `POST /api/v1/faturas/{id}/pagamentos`, and `GET /api/v1/faturas/{id}` in `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/contract/FaturasOpenApiContractTest.java`
 - [ ] T022 [P] [US2] Add HTTP PACT provider coverage for the faturas endpoints and messaging PACT coverage for the `PAGAR` event in `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/pact/FaturasHttpPactProviderTest.java` and `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/pact/PagarEventMessagePactTest.java`
 - [ ] T023 [P] [US2] Add Testcontainers-backed integration coverage for MySQL truth, Redis fallback, JWT validation, retry ceiling 3, and `PROBLEMA` transition in `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/integration/FaturasIntegrationTest.java`
+- [ ] T075 [P] [US2] Add Testcontainers-backed integration coverage proving the retry scheduler creates `trace_id` when missing and propagates it to Backoffice routing message headers in `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/integration/FaturaRetrySchedulerTraceIdIntegrationTest.java`
 - [ ] T066 [P] [US2] Add unit tests for the faturas HTTP endpoints and supporting handlers, including `FaturasController`, fatura status transitions, retry ceiling logic, and cache-aside fallback policy, in `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/unit/FaturasControllerTest.java`, `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/unit/FaturaRetryPolicyTest.java`, `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/unit/FaturaStatusTransitionTest.java`, and `apps/ms-faturas/src/test/java/com/fabriciosanches/adamodulo3/faturas/unit/GetFaturaUseCaseTest.java`
 
 ### Implementation for User Story 2
@@ -150,7 +151,7 @@
 
 ---
 
-## Phase 4: Notificacoes + Backoffice + CI/CD
+## Phase 4: Alerts, Operational Visibility, and Automated Delivery
 
 **Purpose**: Complete downstream notification handling, observability dashboards, and delivery automation for the full monorepo.
 

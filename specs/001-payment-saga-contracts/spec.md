@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-11
 
-**Status**: Draft
+**Status**: Approved
 
 **Input**: User description: "Process the following SDD V14 into a Spec Kit feature specification. Respect the repository constitution in .specify/memory/constitution.md and the existing templates in .specify/templates/spec-template.md and .specify/templates/tasks-template.md. Produce a complete, developer-ready Markdown specification in the standard Spec Kit structure, focused on endpoints, payloads, events, edge cases, functional requirements, success criteria, assumptions, and explicit contract requirements. Do not invent behavior outside the SDD. Defer any unspecified detail to the authoritative contract artifacts instead of guessing."
 
@@ -117,7 +117,7 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **FR-005**: Internal service calls MUST validate propagated JWTs before executing protected operations.
 - **FR-006**: The system MUST generate a `trace_id` at the first entry point, including the gateway and initial job triggers.
 - **FR-007**: The system MUST propagate `trace_id` through HTTP headers and through Kafka and RabbitMQ message headers or properties.
-- **FR-008**: The system MUST write `trace_id` and relevant business identifiers to MDC for every log event.
+- **FR-008**: The system MUST write MDC entries for every log event with at least `trace_id` and one primary business identifier (`fatura_id`, `pagamento_id`, or `comprovante_id`) whenever that identifier exists in the processing context.
 - **FR-009**: The system MUST emit structured JSON logs.
 - **FR-010**: The system MUST expose Micrometer/Prometheus metrics for business and reliability signals, including retries, compensations, and DLT/DLQ counters.
 - **FR-011**: The faturas bounded context MUST persist immutable truth in MySQL database `db_faturas`.
@@ -128,27 +128,27 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **FR-016**: The faturas scheduled worker MUST run every 2 minutes to reprocess faturas in `RECUSADO`.
 - **FR-017**: The faturas scheduled worker MUST increment a retry counter for each re-execution.
 - **FR-018**: The faturas scheduled worker MUST stop after 3 retries and move the fatura to `PROBLEMA`.
-- **FR-018A**: Faturas moved to `PROBLEMA` MUST be routed to Backoffice for manual management through an asynchronous contract.
-- **FR-019**: The payments service MUST consume the `PAGAR` event.
-- **FR-020**: The payments service MUST expose `POST /api/v1/pagamentos/mock/gateway/lote` for mock gateway processing.
-- **FR-021**: The mock gateway flow MUST route payment numbers `0`, `4`, and `9` to `RECUSADO` and compensation.
-- **FR-022**: The mock gateway flow MUST leave all other payment numbers in `PROCESSANDO` temporarily.
-- **FR-023**: The payments service MUST persist `PAGO` only after successful asynchronous confirmation from `comprovante.gerado.topic`.
-- **FR-024**: The comprovantes service MUST expose `POST /api/v1/comprovantes` and MUST return `202 Accepted` with a UUID v4 identifier.
-- **FR-025**: The comprovantes service MUST enqueue a `ComprovanteQueueMessage` on a Direct exchange path defined in `.specs/asyncapi/comprovante-gerado.yaml`.
-- **FR-026**: The comprovantes consumer MUST persist the full payload in MySQL JSON column `payload_notificacao_completo`.
-- **FR-027**: The comprovantes service MUST expose `GET /api/v1/comprovantes/{id}` using cache-aside behavior with a 24-hour TTL.
-- **FR-028**: The comprovantes GET flow MUST retry up to 3 attempts before returning `404`.
-- **FR-029**: The notifications service MUST consume `comprovante.gerado.topic` using the full JSON payload from the receipts stream.
-- **FR-030**: The notifications consumer MUST use a retry policy of 3 attempts and route failures to `comprovante.gerado.DLT`.
-- **FR-031**: Flyway seed scripts MUST store credentials in `db_auth` with BCrypt hashes only.
-- **FR-032**: Flyway seed scripts MUST bulk seed `db_faturas` in `PENDENTE`.
-- **FR-033**: The system MUST use OpenAPI as the authoritative source for all REST contracts.
-- **FR-034**: The system MUST use AsyncAPI as the authoritative source for all messaging contracts.
-- **FR-035**: All HTTP endpoints and messaging handlers MUST have unit, integration, and PACT coverage before merge.
-- **FR-036**: The implementation MUST maintain code coverage at or above 80%.
-- **FR-037**: Every service in scope MUST follow Hexagonal Architecture with explicit inbound and outbound ports and adapters.
-- **FR-038**: Contract drift between implementation and OpenAPI or AsyncAPI MUST block delivery until realigned.
+- **FR-019**: Faturas moved to `PROBLEMA` MUST be routed to Backoffice for manual management through an asynchronous contract.
+- **FR-020**: The payments service MUST consume the `PAGAR` event.
+- **FR-021**: The payments service MUST expose `POST /api/v1/pagamentos/mock/gateway/lote` for mock gateway processing.
+- **FR-022**: The mock gateway flow MUST route payment numbers `0`, `4`, and `9` to `RECUSADO` and compensation.
+- **FR-023**: The mock gateway flow MUST leave all other payment numbers in `PROCESSANDO` only until one terminal business outcome is observed: asynchronous receipt confirmation from `comprovante.gerado.topic` (allowing `PAGO`) or a refusal/compensation path (`RECUSADO`).
+- **FR-024**: The payments service MUST persist `PAGO` only after successful asynchronous confirmation from `comprovante.gerado.topic`.
+- **FR-025**: The comprovantes service MUST expose `POST /api/v1/comprovantes` and MUST return `202 Accepted` with a UUID v4 identifier.
+- **FR-026**: The comprovantes service MUST enqueue a `ComprovanteQueueMessage` on a Direct exchange path defined in `.specs/asyncapi/comprovante-gerado.yaml`.
+- **FR-027**: The comprovantes consumer MUST persist the full payload in MySQL JSON column `payload_notificacao_completo`.
+- **FR-028**: The comprovantes service MUST expose `GET /api/v1/comprovantes/{id}` using cache-aside behavior with a 24-hour TTL.
+- **FR-029**: The comprovantes GET flow MUST retry up to 3 attempts before returning `404`.
+- **FR-030**: The notifications service MUST consume `comprovante.gerado.topic` using the full JSON payload from the receipts stream.
+- **FR-031**: The notifications consumer MUST use a retry policy of 3 attempts and route failures to `comprovante.gerado.DLT`.
+- **FR-032**: Flyway seed scripts MUST store credentials in `db_auth` with BCrypt hashes only.
+- **FR-033**: Flyway seed scripts MUST bulk seed `db_faturas` in `PENDENTE`.
+- **FR-034**: The system MUST use OpenAPI as the authoritative source for all REST contracts.
+- **FR-035**: The system MUST use AsyncAPI as the authoritative source for all messaging contracts.
+- **FR-036**: All HTTP endpoints and messaging handlers MUST have unit, integration, and PACT coverage before merge.
+- **FR-037**: The implementation MUST maintain code coverage at or above 80%.
+- **FR-038**: Every service in scope MUST follow Hexagonal Architecture with explicit inbound and outbound ports and adapters.
+- **FR-039**: Contract drift between implementation and OpenAPI or AsyncAPI MUST block delivery until realigned.
 
 ### Contract and Event Requirements *(mandatory for distributed features)*
 
@@ -178,7 +178,7 @@ The notifications service consumes the receipt-generated event stream and mainta
 
 - Every inbound HTTP request and initial scheduled trigger MUST receive a `trace_id`.
 - Every outbound HTTP call and message publication MUST carry the same `trace_id`.
-- Structured logging MUST be JSON and MUST include `trace_id` plus business identifiers such as `fatura_id`, `pagamento_id`, or `comprovante_id` when available.
+- Structured logging MUST be JSON and MUST follow FR-008 for mandatory MDC key requirements.
 - Metrics MUST make retries, compensations, cache misses, and dead-letter events visible.
 - Retry ceilings MUST be observable so operators can distinguish normal retries from exhausted retries.
 - The observability contract MUST cover HTTP, Kafka, and RabbitMQ traffic uniformly.
