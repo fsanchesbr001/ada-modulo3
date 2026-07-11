@@ -40,7 +40,24 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Bounded contexts are explicitly identified and impacted modules are listed.
+- [ ] Domain layer remains hexagonal and framework-agnostic (no Spring/JPA/
+  messaging dependencies in domain).
+- [ ] Clean Code/SOLID compliance strategy is documented (naming, constants,
+  single-responsibility boundaries).
+- [ ] Testing strategy includes unit + integration tests for all endpoints and
+  PACT coverage for HTTP and messaging contracts.
+- [ ] Coverage plan enforces Jacoco >= 80% in CI/CD.
+- [ ] Trace strategy defines trace_id generation and propagation for HTTP and
+  asynchronous messaging across SAGA flows.
+- [ ] Observability plan includes structured JSON logs with MDC keys and
+  Micrometer/Prometheus metrics (including compensations and DLQ/DLT).
+- [ ] Data plan includes Flyway migrations, JPA/Redis usage, and JSON payload
+  persistence requirement for Receipts/Comprovantes where applicable.
+- [ ] Messaging resilience defines RetryableTopic and DLQ/DLT behavior for
+  external-system Kafka consumers.
+- [ ] Internal security plan enforces JWT validation for service-to-service
+  Authorization: Bearer propagation.
 
 ## Project Structure
 

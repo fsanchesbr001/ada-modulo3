@@ -1,50 +1,133 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: template -> 1.0.0
+- Modified principles:
+	- Principle 1 placeholder -> I. Bounded Contexts + Hexagonal Isolation
+	- Principle 2 placeholder -> II. Clean Code + SOLID + Explicit Domain Language
+	- Principle 3 placeholder -> III. Test and Contract Quality Gates (NON-NEGOTIABLE)
+	- Principle 4 placeholder -> IV. End-to-End Observability and Trace Propagation
+	- Principle 5 placeholder -> V. Data Integrity, Messaging Resilience, and Security
+- Added sections:
+	- Engineering Baseline
+	- Delivery Workflow and Enforcement Gates
+- Removed sections:
+	- None
+- Templates requiring updates:
+	- .specify/templates/plan-template.md: ✅ updated
+	- .specify/templates/spec-template.md: ✅ updated
+	- .specify/templates/tasks-template.md: ✅ updated
+	- .specify/templates/commands/*.md: ⚠ pending (directory not present)
+	- README.md: ✅ reviewed (no constitution references to sync)
+- Deferred TODOs:
+	- None
+-->
+
+# Ada Modulo3 Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Bounded Contexts + Hexagonal Isolation
+Every service MUST belong to an explicit bounded context (API Gateway,
+Invoices/Faturas, Payments/SAGA, Receipts/Comprovantes, Notifications,
+Backoffice) and MUST implement Hexagonal Architecture (Ports and Adapters).
+Domain entities, value objects, policies, and use cases MUST remain framework-
+agnostic and MUST NOT depend on Spring, JPA, Redis, Kafka, RabbitMQ, HTTP, or
+adapter classes. All external dependencies MUST be accessed through inbound or
+outbound ports implemented by adapters.
+Rationale: strict isolation preserves domain integrity, enables independent
+evolution per context, and reduces coupling across distributed services.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Clean Code + SOLID + Explicit Domain Language
+Code MUST follow Clean Code and SOLID principles. Names for classes, methods,
+variables, events, topics, queues, and DTO fields MUST be domain-descriptive and
+unambiguous. Magic numbers and magic strings are forbidden; constants and typed
+value objects MUST be used. Methods MUST be small and single-purpose, and
+classes MUST have one reason to change.
+Rationale: clear intent and disciplined design reduce defects in financial
+systems and improve maintainability for multi-team monorepo development.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test and Contract Quality Gates (NON-NEGOTIABLE)
+All REST controllers and endpoints MUST have unit and integration tests.
+Consumer-Driven Contract Testing with PACT is mandatory for synchronous (HTTP)
+and asynchronous (messaging) integrations. CI/CD MUST enforce minimum code
+coverage of 80% with Jacoco; builds below threshold MUST fail. New behavior,
+changed contracts, and SAGA compensation paths MUST be covered by automated
+tests before merge.
+Rationale: in distributed payment flows, contract safety and regression
+prevention are critical for reliability and compliance.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. End-to-End Observability and Trace Propagation
+A unique trace_id MUST be generated at the first entry point (API Gateway or
+initial job trigger) and propagated through all HTTP headers and message headers
+across the complete SAGA lifecycle. Structured JSON logging is mandatory, and
+trace_id plus business identifiers (for example fatura_id) MUST be written to
+MDC for every log event. Services MUST expose Micrometer/Prometheus metrics,
+including business-critical and reliability signals such as SAGA compensations,
+cache misses, and DLQ/DLT message counts.
+Rationale: complete traceability is required to debug distributed failures,
+support audits, and operate financial flows safely.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Data Integrity, Messaging Resilience, and Security
+Persistence MUST use Spring Data JPA with MySQL and Spring Data Redis for cache
+where applicable. Database schema evolution MUST be managed exclusively by
+Flyway migrations. The Receipts/Comprovantes service MUST persist the full
+notification payload in a MySQL JSON column to prevent information loss during
+asynchronous transitions. Messaging patterns MUST follow design intent: RabbitMQ
+for high-throughput queue workloads and Kafka for event streaming. Kafka
+consumers that interact with external systems MUST use @RetryableTopic with
+non-blocking retries and Dead Letter handling (DLQ/DLT). Internal service calls
+MUST validate JWT propagated by the API Gateway via Authorization: Bearer
+headers.
+Rationale: resilient messaging, controlled data evolution, and uniform token
+validation are mandatory for correctness and secure service-to-service trust.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Engineering Baseline
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- Platform baseline MUST be Java 21 and Spring Boot 3.x.
+- Monorepo modules MUST expose clear ownership, bounded-context boundaries, and
+	versioned contracts.
+- Public contracts (HTTP APIs, events, message schemas) MUST be backward-
+	compatible by default; breaking changes require explicit migration plans.
+- Configuration, secrets handling, and environment overrides MUST be externalized
+	and MUST NOT be hardcoded.
+- Any deviation from these standards MUST be documented in the feature plan with
+	explicit approval rationale.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Delivery Workflow and Enforcement Gates
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- `/speckit.specify` output MUST state bounded context impact, synchronous and
+	asynchronous contracts, and traceability requirements.
+- `/speckit.plan` MUST include a Constitution Check section that verifies all
+	five core principles and maps them to implementation decisions.
+- `/speckit.tasks` MUST include mandatory tasks for unit tests, integration
+	tests, PACT contracts, trace propagation, metrics, Flyway migrations, and
+	security validation.
+- Pull requests MUST include evidence for: test execution, coverage >= 80%,
+	contract test status, and observability instrumentation updates.
+- Code reviews MUST reject changes that leak infrastructure concerns into the
+	domain layer or bypass retry/DLQ and JWT validation requirements.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution is authoritative for engineering decisions in this repository.
+In case of conflict, this document overrides local conventions and ad hoc
+practices.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Amendment process:
+- Propose changes through a PR that includes motivation, impacted principles,
+	migration impact, and template synchronization updates.
+- Approval requires at least one Technical Lead or Principal Engineer reviewer.
+- Ratification occurs on merge; LAST_AMENDED_DATE MUST be updated in ISO format.
+
+Versioning policy:
+- MAJOR: backward-incompatible governance or principle removals/redefinitions.
+- MINOR: new principle/section or materially expanded mandatory guidance.
+- PATCH: clarifications, wording improvements, and non-semantic refinements.
+
+Compliance review expectations:
+- Every feature PR MUST pass Constitution Check evidence in plan and tasks.
+- Release readiness reviews MUST verify testing, contracts, observability,
+	resilience, data migration, and JWT validation compliance.
+- Non-compliant changes MUST be remediated before merge.
+
+**Version**: 1.0.0 | **Ratified**: 2026-07-11 | **Last Amended**: 2026-07-11

@@ -92,11 +92,27 @@
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
+- **FR-006**: System MUST define bounded context ownership and explicit inbound/outbound contracts for each impacted context.
+- **FR-007**: System MUST define traceability requirements, including trace_id generation at entry points and propagation through synchronous and asynchronous interactions.
+- **FR-008**: System MUST define observability requirements for structured logging, MDC keys, and business/reliability metrics.
+- **FR-009**: System MUST define security requirements for JWT validation in internal service communication.
 
 *Example of marking unclear requirements:*
 
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+- **FR-010**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
+- **FR-011**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+
+### Contract and Event Requirements *(mandatory for distributed features)*
+
+- List synchronous API contracts impacted by this feature (consumer, provider, versioning expectations).
+- List asynchronous contracts impacted by this feature (event/topic/queue, schema ownership, delivery semantics).
+- Identify contract-test scope (PACT HTTP and messaging) that MUST pass before merge.
+
+### Observability and Operations Requirements *(mandatory)*
+
+- Define required log fields (minimum: trace_id + domain identifiers).
+- Define required metrics for business flow and reliability behavior.
+- Define retry, compensation, and DLQ/DLT visibility expectations.
 
 ### Key Entities *(include if feature involves data)*
 
