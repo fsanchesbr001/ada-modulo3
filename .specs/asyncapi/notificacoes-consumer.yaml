@@ -2,5 +2,27 @@ asyncapi: 2.6.0
 info:
   title: notificacoes-consumer.yaml
   version: 1.0.0
-channels: {}
-components: {}
+channels:
+  comprovante.gerado.topic:
+    subscribe:
+      summary: Consume generated receipt events for notification delivery
+      message:
+        $ref: '#/components/messages/ComprovanteGeradoMessage'
+components:
+  messages:
+    ComprovanteGeradoMessage:
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - id
+          - trace_id
+          - payload_pdf_json
+        properties:
+          id:
+            type: string
+          trace_id:
+            type: string
+          payload_pdf_json:
+            type: object
+            additionalProperties: true

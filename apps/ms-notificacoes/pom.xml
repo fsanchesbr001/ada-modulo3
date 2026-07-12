@@ -16,6 +16,25 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.fabriciosanches</groupId>
+            <artifactId>observability-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fabriciosanches</groupId>
+            <artifactId>contract-test-kit</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
@@ -28,17 +47,24 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>    </dependencies>
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <asyncapi.notificacoes.consumer.contract>${project.basedir}/../../.specs/asyncapi/notificacoes-consumer.yaml</asyncapi.notificacoes.consumer.contract>
+                        <asyncapi.comprovante.dlt.contract>${project.basedir}/../../.specs/asyncapi/comprovante-gerado-dlt.yaml</asyncapi.comprovante.dlt.contract>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>        </plugins>
+            </plugin>
+        </plugins>
     </build>
 </project>

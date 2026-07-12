@@ -2,5 +2,34 @@ asyncapi: 2.6.0
 info:
   title: comprovante-gerado-dlt.yaml
   version: 1.0.0
-channels: {}
-components: {}
+channels:
+  comprovante.gerado.DLT:
+    publish:
+      summary: Dead-letter event for exhausted notification retries
+      message:
+        $ref: '#/components/messages/ComprovanteGeradoDltMessage'
+components:
+  messages:
+    ComprovanteGeradoDltMessage:
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - id
+          - trace_id
+          - payload_pdf_json
+          - attempts
+          - error
+        properties:
+          id:
+            type: string
+          trace_id:
+            type: string
+          payload_pdf_json:
+            type: object
+            additionalProperties: true
+          attempts:
+            type: integer
+            minimum: 1
+          error:
+            type: string
