@@ -11,7 +11,7 @@ This document records the design decisions that should be treated as settled inp
 - Keep only technical shared libraries in `libs/`.
 
 Reasoning:
-- This preserves bounded-context autonomy while centralizing dependency management for Java 21, Spring Boot 3.x, PACT, Testcontainers, and Jacoco.
+- This preserves bounded-context autonomy while centralizing dependency management for Java 21, Spring Boot 3.x, PACT, and Jacoco.
 
 ## Decision 2: Contract-first artifact layout
 

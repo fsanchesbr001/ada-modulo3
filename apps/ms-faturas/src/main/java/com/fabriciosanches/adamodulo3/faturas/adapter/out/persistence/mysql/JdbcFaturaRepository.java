@@ -15,24 +15,25 @@ import javax.sql.DataSource;
 public class JdbcFaturaRepository implements FaturaRepository {
 
     private static final String UPSERT_SQL = """
-            INSERT INTO db_faturas.fatura (id, lote_id, cliente_documento, valor_total, status, retry_count)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO db_faturas.fatura (id, lote_id, cliente_documento, valor_total, status, retry_count, trace_id_origem)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 lote_id = VALUES(lote_id),
                 cliente_documento = VALUES(cliente_documento),
                 valor_total = VALUES(valor_total),
                 status = VALUES(status),
-                retry_count = VALUES(retry_count)
+                retry_count = VALUES(retry_count),
+                trace_id_origem = VALUES(trace_id_origem)
             """;
 
     private static final String FIND_BY_ID_SQL = """
-            SELECT id, lote_id, cliente_documento, valor_total, status, retry_count
+            SELECT id, lote_id, cliente_documento, valor_total, status, retry_count, trace_id_origem
             FROM db_faturas.fatura
             WHERE id = ?
             """;
 
         private static final String FIND_BY_STATUS_SQL = """
-            SELECT id, lote_id, cliente_documento, valor_total, status, retry_count
+            SELECT id, lote_id, cliente_documento, valor_total, status, retry_count, trace_id_origem
             FROM db_faturas.fatura
             WHERE status = ?
             """;
@@ -104,6 +105,7 @@ public class JdbcFaturaRepository implements FaturaRepository {
         statement.setBigDecimal(4, fatura.getValorTotal());
         statement.setString(5, fatura.getStatus().name());
         statement.setInt(6, fatura.getRetryCount());
+        statement.setString(7, fatura.getTraceIdOrigem());
     }
 
     private Fatura map(ResultSet rs) throws SQLException {
@@ -112,6 +114,7 @@ public class JdbcFaturaRepository implements FaturaRepository {
                 UUID.fromString(rs.getString("lote_id")),
                 rs.getString("cliente_documento"),
                 rs.getBigDecimal("valor_total"),
+                rs.getString("trace_id_origem"),
                 FaturaStatus.valueOf(rs.getString("status")),
                 rs.getInt("retry_count"));
     }

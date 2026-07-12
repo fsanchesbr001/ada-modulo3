@@ -24,6 +24,11 @@ public class ObservabilityConfig {
     }
 
     @Bean
+    Counter backofficeProblemRoutesTotal(MeterRegistry meterRegistry) {
+        return Counter.builder("backoffice_problem_routes_total").register(meterRegistry);
+    }
+
+    @Bean
     FaturasObservability faturasObservability(
             Counter faturasCacheMissesTotal,
             Counter faturasRetryAttemptsTotal,

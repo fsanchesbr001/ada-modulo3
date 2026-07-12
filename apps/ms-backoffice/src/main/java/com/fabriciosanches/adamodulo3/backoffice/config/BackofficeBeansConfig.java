@@ -17,8 +17,10 @@ public class BackofficeBeansConfig {
     }
 
     @Bean
-    RegisterProblemaFaturaUseCase registerProblemaFaturaUseCase(ProblemaFaturaJdbcRepository repository) {
-        return new RegisterProblemaFaturaUseCase(repository);
+    RegisterProblemaFaturaUseCase registerProblemaFaturaUseCase(
+            ProblemaFaturaJdbcRepository repository,
+            BackofficeObservability observability) {
+        return new RegisterProblemaFaturaUseCase(repository, observability);
     }
 
     @Bean

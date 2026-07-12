@@ -1,6 +1,70 @@
 openapi: 3.0.3
 info:
-  title: ms-comprovantes.yaml
+  title: ms-comprovantes
   version: 1.0.0
-paths: {}
-components: {}
+paths:
+  /api/v1/comprovantes:
+    post:
+      summary: Accept comprovante payload for asynchronous processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComprovanteCreateRequest'
+      responses:
+        "202":
+          description: Accepted for asynchronous processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprovanteAcceptedResponse'
+  /api/v1/comprovantes/{id}:
+    get:
+      summary: Retrieve comprovante by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Comprovante found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprovanteResponse'
+        "404":
+          description: Comprovante not found
+components:
+  schemas:
+    ComprovanteCreateRequest:
+      type: object
+      required:
+        - payload_pdf_json
+      properties:
+        payload_pdf_json:
+          type: object
+          additionalProperties: true
+    ComprovanteAcceptedResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+    ComprovanteResponse:
+      type: object
+      required:
+        - id
+        - payload_pdf_json
+      properties:
+        id:
+          type: string
+          format: uuid
+        payload_pdf_json:
+          type: object
+          additionalProperties: true

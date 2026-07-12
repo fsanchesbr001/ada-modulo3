@@ -41,6 +41,7 @@ public class FaturaRetryScheduler {
     public void reprocessarRecusadas() {
         List<Fatura> recusadas = faturaRepository.findByStatus(FaturaStatus.RECUSADO);
         for (Fatura fatura : recusadas) {
+            String traceId = fatura.ensureTraceIdOrigem(UUID.randomUUID().toString());
             FaturaStatus nextStatus = fatura.registrarTentativaRecusada(retryPolicy);
             Fatura saved = faturaRepository.save(fatura);
 
@@ -51,7 +52,7 @@ public class FaturaRetryScheduler {
                         saved.getId(),
                         saved.getLoteId(),
                         saved.getValorTotal(),
-                        UUID.randomUUID().toString(),
+                        traceId,
                         "retry-scheduler");
             } else if (nextStatus == FaturaStatus.PROBLEMA) {
                 observability.onProblemaTransition(saved);
@@ -59,8 +60,8 @@ public class FaturaRetryScheduler {
                 problemaFaturaPublisher.publishProblemaFatura(
                         saved.getId(),
                         saved.getRetryCount(),
-                    idempotencyKey,
-                        UUID.randomUUID().toString(),
+                        idempotencyKey,
+                        traceId,
                         "Retry ceiling exhausted",
                         "{\"source\":\"fatura-retry-scheduler\"}");
             }

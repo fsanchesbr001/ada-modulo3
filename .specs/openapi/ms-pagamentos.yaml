@@ -2,5 +2,11 @@ openapi: 3.0.3
 info:
   title: ms-pagamentos.yaml
   version: 1.0.0
-paths: {}
+paths:
+  /api/v1/pagamentos/mock/gateway/lote:
+    post:
+      summary: Execute mock gateway decision for a pagamento lote
+      responses:
+        "202":
+          description: Mock gateway processing accepted
 components: {}

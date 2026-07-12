@@ -24,7 +24,12 @@ public class CreateLoteUseCase {
 
         List<Fatura> pendingFaturas = new ArrayList<>();
         for (CreateLoteCommand.CreateLoteItem item : command.items()) {
-            pendingFaturas.add(Fatura.createPending(UUID.randomUUID(), loteId, item.clienteDocumento(), item.valorTotal()));
+            pendingFaturas.add(Fatura.createPending(
+                    UUID.randomUUID(),
+                    loteId,
+                    item.clienteDocumento(),
+                    item.valorTotal(),
+                    command.traceId()));
         }
 
         List<Fatura> saved = faturaRepository.saveAll(pendingFaturas);

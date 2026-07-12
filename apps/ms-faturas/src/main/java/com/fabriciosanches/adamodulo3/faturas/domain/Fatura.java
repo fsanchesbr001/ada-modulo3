@@ -10,14 +10,23 @@ public class Fatura {
     private final UUID loteId;
     private final String clienteDocumento;
     private final BigDecimal valorTotal;
+    private String traceIdOrigem;
     private FaturaStatus status;
     private int retryCount;
 
-    public Fatura(UUID id, UUID loteId, String clienteDocumento, BigDecimal valorTotal, FaturaStatus status, int retryCount) {
+    public Fatura(
+            UUID id,
+            UUID loteId,
+            String clienteDocumento,
+            BigDecimal valorTotal,
+            String traceIdOrigem,
+            FaturaStatus status,
+            int retryCount) {
         this.id = Objects.requireNonNull(id, "id is required");
         this.loteId = Objects.requireNonNull(loteId, "loteId is required");
         this.clienteDocumento = Objects.requireNonNull(clienteDocumento, "clienteDocumento is required");
         this.valorTotal = validateValorTotal(valorTotal);
+        this.traceIdOrigem = traceIdOrigem;
         this.status = Objects.requireNonNull(status, "status is required");
         if (retryCount < 0) {
             throw new IllegalArgumentException("retryCount must be >= 0");
@@ -25,8 +34,13 @@ public class Fatura {
         this.retryCount = retryCount;
     }
 
-    public static Fatura createPending(UUID id, UUID loteId, String clienteDocumento, BigDecimal valorTotal) {
-        return new Fatura(id, loteId, clienteDocumento, valorTotal, FaturaStatus.PENDENTE, 0);
+    public static Fatura createPending(
+            UUID id,
+            UUID loteId,
+            String clienteDocumento,
+            BigDecimal valorTotal,
+            String traceIdOrigem) {
+        return new Fatura(id, loteId, clienteDocumento, valorTotal, traceIdOrigem, FaturaStatus.PENDENTE, 0);
     }
 
     public void solicitarPagamento() {
@@ -71,6 +85,17 @@ public class Fatura {
 
     public BigDecimal getValorTotal() {
         return valorTotal;
+    }
+
+    public String getTraceIdOrigem() {
+        return traceIdOrigem;
+    }
+
+    public String ensureTraceIdOrigem(String fallbackTraceId) {
+        if (this.traceIdOrigem == null || this.traceIdOrigem.isBlank()) {
+            this.traceIdOrigem = Objects.requireNonNull(fallbackTraceId, "fallbackTraceId is required");
+        }
+        return this.traceIdOrigem;
     }
 
     public FaturaStatus getStatus() {

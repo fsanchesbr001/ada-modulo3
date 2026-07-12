@@ -84,7 +84,7 @@ Expected validation gates:
 - OpenAPI drift checks pass
 - AsyncAPI drift checks pass
 - PACT tests execute
-- Testcontainers-backed integration tests execute
+- Integration tests execute
 - Jacoco coverage remains at or above 80%
 
 ## Step 4: Run the Service Build in Chronological Order
@@ -104,7 +104,7 @@ Recommended build progression:
 Example Maven commands once the monorepo structure exists:
 
 ```powershell
-.\mvnw.cmd -pl libs/observability-starter,libs/contract-test-kit,libs/testcontainers-support -am verify
+.\mvnw.cmd -pl libs/observability-starter,libs/contract-test-kit -am verify
 .\mvnw.cmd -pl apps/api-gateway -am verify
 .\mvnw.cmd -pl apps/ms-faturas -am verify
 .\mvnw.cmd -pl apps/ms-backoffice -am verify

@@ -1,6 +1,36 @@
 asyncapi: 2.6.0
 info:
-  title: comprovante-gerado.yaml
+  title: comprovante-gerado
   version: 1.0.0
-channels: {}
-components: {}
+channels:
+  comprovante.queue:
+    publish:
+      message:
+        $ref: '#/components/messages/ComprovanteQueueMessage'
+  comprovante.gerado.topic:
+    publish:
+      message:
+        $ref: '#/components/messages/ComprovanteQueueMessage'
+components:
+  messages:
+    ComprovanteQueueMessage:
+      name: ComprovanteQueueMessage
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ComprovanteQueuePayload'
+  schemas:
+    ComprovanteQueuePayload:
+      type: object
+      required:
+        - id
+        - trace_id
+        - payload_pdf_json
+      properties:
+        id:
+          type: string
+          format: uuid
+        trace_id:
+          type: string
+        payload_pdf_json:
+          type: object
+          additionalProperties: true

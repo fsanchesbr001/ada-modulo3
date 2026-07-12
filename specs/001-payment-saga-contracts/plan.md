@@ -10,10 +10,10 @@
 
 Build the distributed PIX payment monorepo in four strictly ordered phases so that contracts and infrastructure exist before downstream service code depends on them.
 
-- **Phase 1 - Foundation of shared infrastructure and contracts**: provision local container infrastructure, isolate OpenAPI and AsyncAPI artifacts under `.specs/`, and refactor the build into a parent monorepo with shared dependency management for Spring Boot 3.x, PACT, Testcontainers, and Jacoco.
+- **Phase 1 - Foundation of shared infrastructure and contracts**: provision local container infrastructure, isolate OpenAPI and AsyncAPI artifacts under `.specs/`, and refactor the build into a parent monorepo with shared dependency management for Spring Boot 3.x, PACT, and Jacoco.
 - **Phase 2 - Edge security, entry domain, and exhausted-retry escalation**: implement the API Gateway auth boundary, BCrypt-based Flyway seed for `db_auth`, the `ms-faturas` bounded context with MySQL truth, Redis state projection, and the 3-attempt `RECUSADO -> PROBLEMA` worker, plus the minimal `ms-backoffice` routing slice required to capture exhausted retries.
 - **Phase 3 - Transactionality, throughput, and active contracts**: implement `ms-comprovantes` high-throughput async ingestion, RabbitMQ consumer persistence with JSON payload retention, cache-aside retrieval, and the `ms-pagamentos` SAGA orchestrator with the hard prohibition on synchronous `PAGO` finalization.
-- **Phase 4 - Alerts, operational visibility, and automated delivery**: implement `ms-notificacoes` and GitHub Actions CI/CD with staged contract verification, Testcontainers-backed integration tests, multi-stage Docker image builds, and the remaining observability dashboards.
+- **Phase 4 - Alerts, operational visibility, and automated delivery**: implement `ms-notificacoes` and GitHub Actions CI/CD with staged contract verification, integration tests, multi-stage Docker image builds, and the remaining observability dashboards.
 
 This feature also requires two first-class design outputs before tasks are generated:
 
@@ -26,11 +26,11 @@ The existing root build is currently a single-module Spring Boot application usi
 
 **Language/Version**: Java 21, Spring Boot 3.x
 
-**Primary Dependencies**: Spring Cloud Gateway, Spring Security Crypto, JWT HMAC-SHA256 support, Spring Data JPA, Spring Data Redis, Flyway, Spring AMQP, Spring for Apache Kafka, Micrometer/Prometheus, PACT, Testcontainers, Jacoco
+**Primary Dependencies**: Spring Cloud Gateway, Spring Security Crypto, JWT HMAC-SHA256 support, Spring Data JPA, Spring Data Redis, Flyway, Spring AMQP, Spring for Apache Kafka, Micrometer/Prometheus, PACT, Jacoco
 
 **Storage**: MySQL 8.0 with isolated logical schemas (`db_auth`, `db_faturas`, plus service-owned schemas as needed), Redis for cache-aside and high-speed state, RabbitMQ Direct Exchange, Apache Kafka with DLT support
 
-**Testing**: JUnit 5, Spring Boot Test, Testcontainers, PACT for HTTP and messaging, Jacoco coverage gate >= 80%
+**Testing**: JUnit 5, Spring Boot Test, PACT for HTTP and messaging, Jacoco coverage gate >= 80%
 
 **Target Platform**: Dockerized Linux services executed locally with Docker Compose and validated in GitHub Actions
 
@@ -215,8 +215,7 @@ infra/
 
 libs/
 ├── observability-starter/
-├── contract-test-kit/
-└── testcontainers-support/
+└── contract-test-kit/
 
 pom.xml
 ```
