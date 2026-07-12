@@ -71,22 +71,22 @@ jobs:
             exit 1
           fi
 
-            python - <<'PY'
-            import xml.etree.ElementTree as ET
-            report = ET.parse('target/site/jacoco-aggregate/jacoco.xml').getroot()
-            for counter in report.findall('counter'):
-              if counter.get('type') == 'LINE':
-                covered = int(counter.get('covered'))
-                missed = int(counter.get('missed'))
-                total = covered + missed
-                ratio = covered / total if total else 0.0
-                print(f'LINE_COVERAGE={ratio:.4f}')
-                if ratio < 0.80:
-                  raise SystemExit(f'Coverage gate failed: {ratio:.4%} < 80.00%')
-                break
-            else:
-              raise SystemExit('LINE counter not found in Jacoco aggregate report')
-            PY
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          report = ET.parse('target/site/jacoco-aggregate/jacoco.xml').getroot()
+          for counter in report.findall('counter'):
+            if counter.get('type') == 'LINE':
+              covered = int(counter.get('covered'))
+              missed = int(counter.get('missed'))
+              total = covered + missed
+              ratio = covered / total if total else 0.0
+              print(f'LINE_COVERAGE={ratio:.4f}')
+              if ratio < 0.80:
+                raise SystemExit(f'Coverage gate failed: {ratio:.4%} < 80.00%')
+              break
+          else:
+            raise SystemExit('LINE counter not found in Jacoco aggregate report')
+          PY
 
   docker-multi-stage-build:
     runs-on: ubuntu-latest
