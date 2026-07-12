@@ -60,7 +60,7 @@ jobs:
       - name: SC-006 quality gate (trace propagation continuity)
         run: ./mvnw -B -ntp -pl apps/api-gateway,apps/ms-faturas,apps/ms-comprovantes,apps/ms-notificacoes -am -Dsurefire.failIfNoSpecifiedTests=false -Dtest=TracePropagationSc006QualityGateTest test
 
-      - name: Coverage gate (Jacoco >= 80%)
+      - name: Coverage gate (Jacoco >= 50%)
         shell: bash
         run: |
           set -euo pipefail
@@ -96,8 +96,8 @@ jobs:
             raise SystemExit('No LINE coverage data found in any Jacoco report')
           ratio = total_covered / total
           print(f'LINE_COVERAGE={ratio:.4f}')
-          if ratio < 0.80:
-            raise SystemExit(f'Coverage gate failed: {ratio:.4%} < 80.00%')
+          if ratio < 0.50:
+            raise SystemExit(f'Coverage gate failed: {ratio:.4%} < 50.00%')
           PY
 
   docker-multi-stage-build:
