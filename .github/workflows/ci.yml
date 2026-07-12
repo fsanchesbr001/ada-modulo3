@@ -132,6 +132,7 @@ jobs:
           cat > Dockerfile.ci <<'EOF'
           ARG MODULE
           FROM maven:3.9.8-eclipse-temurin-21 AS build
+          ARG MODULE
           WORKDIR /workspace
           COPY . .
           RUN chmod +x mvnw
