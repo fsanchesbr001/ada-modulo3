@@ -36,7 +36,7 @@ docker compose -f .\compose.yaml down
 
 Swagger UI (padrão Springdoc):
 
-- API Gateway: http://localhost:8080/swagger-ui/index.html
+- API Gateway: http://localhost:8080/swagger-ui/index.html - usuario: `admin` / senha: `admin`
 - MS Faturas: http://localhost:8081/swagger-ui/index.html
 - MS Pagamentos: http://localhost:8082/swagger-ui/index.html
 - MS Comprovantes: http://localhost:8083/swagger-ui/index.html

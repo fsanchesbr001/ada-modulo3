@@ -50,6 +50,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.6.1
     container_name: pix-kafka
+    restart: unless-stopped
     depends_on:
       zookeeper:
         condition: service_started
