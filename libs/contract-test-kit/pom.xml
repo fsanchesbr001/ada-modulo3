@@ -29,6 +29,17 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <failIfNoTests>false</failIfNoTests>
+                    <systemPropertyVariables>
+                        <pact.verifier.failIfNoPactsFound>true</pact.verifier.failIfNoPactsFound>
+                        <pact.verifier.publishResults>true</pact.verifier.publishResults>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
