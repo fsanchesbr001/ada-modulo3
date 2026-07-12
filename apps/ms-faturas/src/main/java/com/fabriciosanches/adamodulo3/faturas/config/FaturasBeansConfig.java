@@ -16,6 +16,7 @@ import com.fabriciosanches.adamodulo3.faturas.domain.FaturaRetryPolicy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,7 +55,7 @@ public class FaturasBeansConfig {
     ProblemaFaturaPublisherPort problemaFaturaPublisher(
             KafkaTemplate<String, String> kafkaTemplate,
             ObjectMapper objectMapper,
-            Counter backofficeProblemRoutesTotal,
+            @Qualifier("backofficeProblemRoutesTotal") Counter backofficeProblemRoutesTotal,
             @Value("${messaging.kafka.topics.problema-fatura:problema-fatura-routing}") String routingTopic) {
         return new ProblemaFaturaPublisher(kafkaTemplate, objectMapper, routingTopic, backofficeProblemRoutesTotal);
     }

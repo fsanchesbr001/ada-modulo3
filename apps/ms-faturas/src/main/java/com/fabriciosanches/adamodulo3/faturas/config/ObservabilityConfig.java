@@ -2,6 +2,7 @@ package com.fabriciosanches.adamodulo3.faturas.config;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,9 +31,9 @@ public class ObservabilityConfig {
 
     @Bean
     FaturasObservability faturasObservability(
-            Counter faturasCacheMissesTotal,
-            Counter faturasRetryAttemptsTotal,
-            Counter faturasProblemaTransitionsTotal) {
+            @Qualifier("faturasCacheMissesTotal") Counter faturasCacheMissesTotal,
+            @Qualifier("faturasRetryAttemptsTotal") Counter faturasRetryAttemptsTotal,
+            @Qualifier("faturasProblemaTransitionsTotal") Counter faturasProblemaTransitionsTotal) {
         return new FaturasObservability(
                 faturasCacheMissesTotal,
                 faturasRetryAttemptsTotal,

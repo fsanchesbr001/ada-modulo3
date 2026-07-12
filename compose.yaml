@@ -1,21 +1,295 @@
 services:
   mysql:
-    image: 'mysql:latest'
+    image: mysql:8.0
+    container_name: pix-mysql
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+      MYSQL_ROOT_PASSWORD: root
     ports:
-      - '3306'
-  rabbitmq:
-    image: 'rabbitmq:latest'
-    environment:
-      - 'RABBITMQ_DEFAULT_PASS=secret'
-      - 'RABBITMQ_DEFAULT_USER=myuser'
-    ports:
-      - '5672'
+      - "3307:3306"
+    volumes:
+      - ./infra/docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   redis:
-    image: 'redis:latest'
+    image: redis:7
+    container_name: pix-redis
     ports:
-      - '6379'
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: pix-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: pix-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: pix-kafka
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: pix-kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    ports:
+      - "8088:8080"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        APP_MODULE: apps/api-gateway
+    image: ada-modulo3/api-gateway:local
+    container_name: pix-api-gateway
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_auth
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  ms-faturas:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        APP_MODULE: apps/ms-faturas
+    image: ada-modulo3/ms-faturas:local
+    container_name: pix-ms-faturas
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_faturas
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  ms-pagamentos:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        APP_MODULE: apps/ms-pagamentos
+    image: ada-modulo3/ms-pagamentos:local
+    container_name: pix-ms-pagamentos
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_pagamentos
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration/db_pagamentos
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  ms-comprovantes:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        APP_MODULE: apps/ms-comprovantes
+    image: ada-modulo3/ms-comprovantes:local
+    container_name: pix-ms-comprovantes
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_comprovantes
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration/db_comprovantes
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  ms-notificacoes:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        APP_MODULE: apps/ms-notificacoes
+    image: ada-modulo3/ms-notificacoes:local
+    container_name: pix-ms-notificacoes
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8084
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8084/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  ms-backoffice:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        APP_MODULE: apps/ms-backoffice
+    image: ada-modulo3/ms-backoffice:local
+    container_name: pix-ms-backoffice
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_backoffice
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8085/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pix-prometheus
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+      ms-faturas:
+        condition: service_healthy
+      ms-pagamentos:
+        condition: service_healthy
+      ms-comprovantes:
+        condition: service_healthy
+      ms-notificacoes:
+        condition: service_healthy
+      ms-backoffice:
+        condition: service_healthy
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pix-grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"

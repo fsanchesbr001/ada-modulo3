@@ -1,0 +1,9 @@
+.git
+.github
+.idea
+.specify
+.specs
+specs
+**/target
+**/.DS_Store
+**/*.iml

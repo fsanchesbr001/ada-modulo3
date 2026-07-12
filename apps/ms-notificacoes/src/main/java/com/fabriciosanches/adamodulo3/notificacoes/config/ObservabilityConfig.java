@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Configuration
 public class ObservabilityConfig {
@@ -25,9 +26,9 @@ public class ObservabilityConfig {
 
     @Bean
     NotificacoesObservability notificacoesObservability(
-            Counter notificacoesConsumerThroughputTotal,
-            Counter notificacoesRetriesTotal,
-            Counter notificacoesDltTotal) {
+            @Qualifier("notificacoesConsumerThroughputTotal") Counter notificacoesConsumerThroughputTotal,
+            @Qualifier("notificacoesRetriesTotal") Counter notificacoesRetriesTotal,
+            @Qualifier("notificacoesDltTotal") Counter notificacoesDltTotal) {
         return new NotificacoesObservability(
                 notificacoesConsumerThroughputTotal,
                 notificacoesRetriesTotal,

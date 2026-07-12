@@ -2,6 +2,7 @@ package com.fabriciosanches.adamodulo3.pagamentos.config;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,10 +31,10 @@ public class ObservabilityConfig {
 
     @Bean
     PagamentosObservability pagamentosObservability(
-            Counter pagamentosPagoBlockedTotal,
-            Counter pagamentosCompensationsTotal,
-            Counter pagamentosPagarConsumedTotal,
-            Counter pagamentosPagoConfirmedTotal) {
+            @Qualifier("pagamentosPagoBlockedTotal") Counter pagamentosPagoBlockedTotal,
+            @Qualifier("pagamentosCompensationsTotal") Counter pagamentosCompensationsTotal,
+            @Qualifier("pagamentosPagarConsumedTotal") Counter pagamentosPagarConsumedTotal,
+            @Qualifier("pagamentosPagoConfirmedTotal") Counter pagamentosPagoConfirmedTotal) {
         return new PagamentosObservability(
                 pagamentosPagoBlockedTotal,
                 pagamentosCompensationsTotal,

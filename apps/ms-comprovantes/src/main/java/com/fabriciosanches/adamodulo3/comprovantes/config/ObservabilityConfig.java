@@ -2,6 +2,7 @@ package com.fabriciosanches.adamodulo3.comprovantes.config;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -40,12 +41,12 @@ public class ObservabilityConfig {
 
     @Bean
     ComprovantesObservability comprovantesObservability(
-            Counter comprovantesPostsAcceptedTotal,
-            Counter comprovantesQueuePublicationsTotal,
-            Counter comprovantesConsumerFailuresTotal,
-            Counter comprovantesCacheHitsTotal,
-            Counter comprovantesCacheMissesTotal,
-            Counter comprovantesGetRetriesTotal) {
+            @Qualifier("comprovantesPostsAcceptedTotal") Counter comprovantesPostsAcceptedTotal,
+            @Qualifier("comprovantesQueuePublicationsTotal") Counter comprovantesQueuePublicationsTotal,
+            @Qualifier("comprovantesConsumerFailuresTotal") Counter comprovantesConsumerFailuresTotal,
+            @Qualifier("comprovantesCacheHitsTotal") Counter comprovantesCacheHitsTotal,
+            @Qualifier("comprovantesCacheMissesTotal") Counter comprovantesCacheMissesTotal,
+            @Qualifier("comprovantesGetRetriesTotal") Counter comprovantesGetRetriesTotal) {
         return new ComprovantesObservability(
                 comprovantesPostsAcceptedTotal,
                 comprovantesQueuePublicationsTotal,
