@@ -120,6 +120,12 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **FR-008**: The system MUST write MDC entries for every log event with at least `trace_id` and one primary business identifier (`fatura_id`, `pagamento_id`, or `comprovante_id`) whenever that identifier exists in the processing context.
 - **FR-009**: The system MUST emit structured JSON logs.
 - **FR-010**: The system MUST expose Micrometer/Prometheus metrics for business and reliability signals, including retries, compensations, and DLT/DLQ counters.
+
+#### Log Contract Baseline *(mandatory)*
+
+- Every structured JSON log entry MUST contain, at minimum, `timestamp` (ISO-8601 UTC), `level`, `service_name`, `environment`, `trace_id`, `message`, and `event_type`.
+- When available in the processing context, every log entry MUST include one primary business identifier: `fatura_id`, `pagamento_id`, or `comprovante_id`.
+- Error log entries MUST additionally include `error_code`, `error_type`, `retry_attempt` (when applicable), and `exhausted_retry` (when applicable).
 - **FR-011**: The faturas bounded context MUST persist immutable truth in MySQL database `db_faturas`.
 - **FR-012**: The faturas bounded context MUST use Redis for high-speed state handling.
 - **FR-013**: The faturas service MUST expose `POST /api/v1/faturas/lote` as a JWT-protected endpoint.
@@ -149,6 +155,7 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **FR-037**: The implementation MUST maintain code coverage at or above 80%.
 - **FR-038**: Every service in scope MUST follow Hexagonal Architecture with explicit inbound and outbound ports and adapters.
 - **FR-039**: Contract drift between implementation and OpenAPI or AsyncAPI MUST block delivery until realigned.
+- **FR-040**: For each exhausted fatura lifecycle that transitions to `PROBLEMA`, the system MUST publish exactly one Backoffice routing event, with idempotency guarantees that prevent duplicate emissions for the same exhausted lifecycle.
 
 ### Contract and Event Requirements *(mandatory for distributed features)*
 
@@ -202,9 +209,10 @@ The notifications service consumes the receipt-generated event stream and mainta
 - **SC-003**: In end-to-end flow validation, no payment reaches `PAGO` before successful consumption of `comprovante.gerado.topic`.
 - **SC-004**: Every retry-bearing flow stops at 3 attempts or fewer, and exhausted faturas are visible in `PROBLEMA` while exhausted receipt lookups return `404`.
 - **SC-005**: At least 80% code coverage is maintained across the feature scope.
-- **SC-006**: 100% of generated logs and published messages in the covered flows carry a `trace_id`.
+- **SC-006**: For all critical flows (auth login, fatura payment request, retry-to-`PROBLEMA` escalation, comprovante generation, and notificacoes consumption), CI integration suites MUST assert trace propagation in 100% of sampled transitions by verifying inbound HTTP trace creation or propagation, outbound HTTP propagation, Kafka and RabbitMQ header/property propagation, and structured logs carrying the same `trace_id`.
 - **SC-007**: 100% of seeded credentials are stored as BCrypt hashes, with no plaintext password material in seed artifacts.
 - **SC-008**: 100% of faturas that exhaust the retry ceiling are routed to Backoffice with a contract-compliant payload and trace correlation.
+- **SC-009**: 100% of exhausted fatura lifecycles produce exactly one Backoffice routing message, verified by automated integration tests with duplicate-emission assertions.
 
 ## Assumptions
 

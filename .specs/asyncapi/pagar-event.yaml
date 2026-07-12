@@ -2,5 +2,22 @@ asyncapi: 2.6.0
 info:
   title: pagar-event.yaml
   version: 1.0.0
-channels: {}
-components: {}
+channels:
+  pagar:
+    publish:
+      summary: Event emitted by ms-faturas to request payment processing
+      message:
+        $ref: '#/components/messages/PagarEvent'
+components:
+  messages:
+    PagarEvent:
+      payload:
+        type: object
+        required:
+          - fatura_id
+          - trace_id
+        properties:
+          fatura_id:
+            type: string
+          trace_id:
+            type: string

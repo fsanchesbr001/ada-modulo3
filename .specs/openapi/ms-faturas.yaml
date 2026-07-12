@@ -2,5 +2,35 @@ openapi: 3.0.3
 info:
   title: ms-faturas.yaml
   version: 1.0.0
-paths: {}
+paths:
+  /api/v1/faturas/lote:
+    post:
+      summary: Create fatura batch
+      responses:
+        "202":
+          description: Batch accepted
+  /api/v1/faturas/{id}/pagamentos:
+    post:
+      summary: Request payment processing for a fatura
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Payment request accepted
+  /api/v1/faturas/{id}:
+    get:
+      summary: Retrieve current fatura state
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current fatura state
 components: {}
