@@ -2,6 +2,7 @@ package com.fabriciosanches.adamodulo3.faturas.adapter.in.scheduler;
 
 import com.fabriciosanches.adamodulo3.faturas.application.model.GetFaturaResult;
 import com.fabriciosanches.adamodulo3.faturas.application.port.out.FaturaCachePort;
+import com.fabriciosanches.adamodulo3.faturas.application.port.out.ProblemaFaturaPublisherPort;
 import com.fabriciosanches.adamodulo3.faturas.application.port.out.FaturaRepository;
 import com.fabriciosanches.adamodulo3.faturas.application.port.out.PaymentRequestPublisher;
 import com.fabriciosanches.adamodulo3.faturas.config.FaturasObservability;
@@ -17,6 +18,7 @@ public class FaturaRetryScheduler {
     private final FaturaRepository faturaRepository;
     private final FaturaCachePort cachePort;
     private final PaymentRequestPublisher paymentRequestPublisher;
+    private final ProblemaFaturaPublisherPort problemaFaturaPublisher;
     private final FaturaRetryPolicy retryPolicy;
     private final FaturasObservability observability;
 
@@ -24,11 +26,13 @@ public class FaturaRetryScheduler {
             FaturaRepository faturaRepository,
             FaturaCachePort cachePort,
             PaymentRequestPublisher paymentRequestPublisher,
+            ProblemaFaturaPublisherPort problemaFaturaPublisher,
             FaturaRetryPolicy retryPolicy,
             FaturasObservability observability) {
         this.faturaRepository = faturaRepository;
         this.cachePort = cachePort;
         this.paymentRequestPublisher = paymentRequestPublisher;
+        this.problemaFaturaPublisher = problemaFaturaPublisher;
         this.retryPolicy = retryPolicy;
         this.observability = observability;
     }
@@ -51,6 +55,14 @@ public class FaturaRetryScheduler {
                         "retry-scheduler");
             } else if (nextStatus == FaturaStatus.PROBLEMA) {
                 observability.onProblemaTransition(saved);
+                String idempotencyKey = saved.getId() + ":retry-exhausted:" + saved.getRetryCount();
+                problemaFaturaPublisher.publishProblemaFatura(
+                        saved.getId(),
+                        saved.getRetryCount(),
+                    idempotencyKey,
+                        UUID.randomUUID().toString(),
+                        "Retry ceiling exhausted",
+                        "{\"source\":\"fatura-retry-scheduler\"}");
             }
 
             GetFaturaResult snapshot = new GetFaturaResult(

@@ -1,6 +1,7 @@
 package com.fabriciosanches.adamodulo3.faturas.config;
 
 import com.fabriciosanches.adamodulo3.faturas.adapter.in.scheduler.FaturaRetryScheduler;
+import com.fabriciosanches.adamodulo3.faturas.adapter.out.messaging.ProblemaFaturaPublisher;
 import com.fabriciosanches.adamodulo3.faturas.adapter.out.messaging.PagarEventPublisher;
 import com.fabriciosanches.adamodulo3.faturas.adapter.out.persistence.mysql.JdbcFaturaRepository;
 import com.fabriciosanches.adamodulo3.faturas.adapter.out.persistence.redis.RedisFaturaCacheAdapter;
@@ -10,6 +11,7 @@ import com.fabriciosanches.adamodulo3.faturas.application.SolicitarPagamentoUseC
 import com.fabriciosanches.adamodulo3.faturas.application.port.out.FaturaCachePort;
 import com.fabriciosanches.adamodulo3.faturas.application.port.out.FaturaRepository;
 import com.fabriciosanches.adamodulo3.faturas.application.port.out.PaymentRequestPublisher;
+import com.fabriciosanches.adamodulo3.faturas.application.port.out.ProblemaFaturaPublisherPort;
 import com.fabriciosanches.adamodulo3.faturas.domain.FaturaRetryPolicy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.sql.DataSource;
@@ -48,6 +50,14 @@ public class FaturasBeansConfig {
     }
 
     @Bean
+    ProblemaFaturaPublisherPort problemaFaturaPublisher(
+            KafkaTemplate<String, String> kafkaTemplate,
+            ObjectMapper objectMapper,
+            @Value("${messaging.kafka.topics.problema-fatura:problema-fatura-routing}") String routingTopic) {
+        return new ProblemaFaturaPublisher(kafkaTemplate, objectMapper, routingTopic);
+    }
+
+    @Bean
     FaturaRetryPolicy faturaRetryPolicy() {
         return new FaturaRetryPolicy();
     }
@@ -78,8 +88,15 @@ public class FaturasBeansConfig {
             FaturaRepository repository,
             FaturaCachePort cachePort,
             PaymentRequestPublisher paymentRequestPublisher,
+            ProblemaFaturaPublisherPort problemaFaturaPublisher,
             FaturaRetryPolicy retryPolicy,
             FaturasObservability observability) {
-        return new FaturaRetryScheduler(repository, cachePort, paymentRequestPublisher, retryPolicy, observability);
+        return new FaturaRetryScheduler(
+                repository,
+                cachePort,
+                paymentRequestPublisher,
+                problemaFaturaPublisher,
+                retryPolicy,
+                observability);
     }
 }
