@@ -2,5 +2,41 @@ asyncapi: 2.6.0
 info:
   title: problema-fatura-routing.yaml
   version: 1.0.0
-channels: {}
-components: {}
+channels:
+  problema-fatura-routing:
+    publish:
+      summary: Event emitted by ms-faturas when retry ceiling is exhausted and status moves to PROBLEMA
+      message:
+        $ref: '#/components/messages/ProblemaFaturaRoutingEvent'
+components:
+  messages:
+    ProblemaFaturaRoutingEvent:
+      payload:
+        type: object
+        required:
+          - event_id
+          - idempotency_key
+          - trace_id
+          - fatura_id
+          - retry_count_final
+          - motivo
+          - payload_contexto
+          - routed_at
+        properties:
+          event_id:
+            type: string
+          idempotency_key:
+            type: string
+          trace_id:
+            type: string
+          fatura_id:
+            type: string
+          retry_count_final:
+            type: integer
+          motivo:
+            type: string
+          payload_contexto:
+            type: string
+          routed_at:
+            type: string
+            format: date-time
