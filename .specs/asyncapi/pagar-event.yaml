@@ -14,10 +14,27 @@ components:
       payload:
         type: object
         required:
+          - event_id
           - fatura_id
+          - lote_id
+          - valor_total
+          - requested_at
           - trace_id
+          - authorization_subject
         properties:
+          event_id:
+            type: string
           fatura_id:
             type: string
+          lote_id:
+            type: string
+          valor_total:
+            type: number
+            format: double
+          requested_at:
+            type: string
+            format: date-time
           trace_id:
+            type: string
+          authorization_subject:
             type: string

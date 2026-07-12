@@ -27,8 +27,12 @@ class PagarEventMessagePactTest {
 
         String yaml = Files.readString(asyncApiPath);
         assertAll(
-                () -> assertTrue(yaml.contains("asyncapi:"), "Contract must be an AsyncAPI document"),
+            () -> assertTrue(yaml.contains("asyncapi: 2.6.0"), "Contract must be an AsyncAPI 2.6.0 document"),
+            () -> assertTrue(yaml.contains("channels:"), "Contract must declare messaging channels"),
+            () -> assertTrue(yaml.contains("pagar:"), "Contract must declare the PAGAR channel"),
+            () -> assertTrue(yaml.contains("publish:"), "Contract must declare publisher semantics for PAGAR"),
                 () -> assertTrue(yaml.toLowerCase().contains("pagar"), "Contract must describe PAGAR semantics"),
-                () -> assertTrue(yaml.toLowerCase().contains("trace_id"), "Contract must include trace_id propagation expectations"));
+            () -> assertTrue(yaml.toLowerCase().contains("fatura_id"), "Contract must include fatura correlation field"),
+            () -> assertTrue(yaml.toLowerCase().contains("trace_id"), "Contract must include trace_id propagation expectations"));
     }
 }

@@ -27,9 +27,12 @@ class FaturasHttpPactProviderTest {
 
         String yaml = Files.readString(contractPath);
         assertAll(
+            () -> assertTrue(yaml.contains("version:"), "Pact precondition: contract metadata must include a version"),
                 () -> assertTrue(yaml.contains("openapi:"), "Contract must be an OpenAPI document"),
                 () -> assertTrue(yaml.contains("/api/v1/faturas/lote"), "Pact precondition: lote endpoint must exist"),
+            () -> assertTrue(yaml.contains("summary: Create fatura batch"), "Pact precondition: lote operation summary must be explicit"),
                 () -> assertTrue(yaml.contains("/api/v1/faturas/{id}/pagamentos"), "Pact precondition: pagamento request endpoint must exist"),
+            () -> assertTrue(yaml.contains("summary: Request payment processing for a fatura"), "Pact precondition: pagamento summary must be explicit"),
                 () -> assertTrue(yaml.contains("/api/v1/faturas/{id}"), "Pact precondition: fatura lookup endpoint must exist"));
     }
 }

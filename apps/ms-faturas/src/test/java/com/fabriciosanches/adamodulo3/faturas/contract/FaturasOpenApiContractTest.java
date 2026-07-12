@@ -27,8 +27,13 @@ class FaturasOpenApiContractTest {
 
         String yaml = Files.readString(contractPath);
         assertAll(
+            () -> assertTrue(yaml.contains("openapi: 3.0.3"), "Contract must declare supported OpenAPI version"),
                 () -> assertTrue(yaml.contains("/api/v1/faturas/lote"), "Contract must declare POST /api/v1/faturas/lote"),
+            () -> assertTrue(yaml.contains("post:"), "Contract must define POST operations"),
+            () -> assertTrue(yaml.contains("\"202\":"), "Contract must declare acceptance responses for write operations"),
                 () -> assertTrue(yaml.contains("/api/v1/faturas/{id}/pagamentos"), "Contract must declare POST /api/v1/faturas/{id}/pagamentos"),
-                () -> assertTrue(yaml.contains("/api/v1/faturas/{id}"), "Contract must declare GET /api/v1/faturas/{id}"));
+            () -> assertTrue(yaml.contains("name: id"), "Contract must require path id parameter for item operations"),
+            () -> assertTrue(yaml.contains("/api/v1/faturas/{id}"), "Contract must declare GET /api/v1/faturas/{id}"),
+            () -> assertTrue(yaml.contains("\"200\":"), "Contract must declare 200 response for fatura read operation"));
     }
 }
