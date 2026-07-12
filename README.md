@@ -1,6 +1,6 @@
 # Projeto ADA - Módulo III
 
-Idealizadores: Alice Postai e Fabricio Sanches
+Idealizadores: Alice Postai,Osiel e Fabricio Sanches
 
 ## Pré-requisitos
 
