@@ -55,7 +55,7 @@ jobs:
         run: ./mvnw -B -ntp verify
 
       - name: SC-009 quality gate (exactly-one backoffice routing)
-        run: ./mvnw -B -ntp -pl apps/ms-backoffice -am -Dtest=ProblemaFaturaRoutingSc009QualityGateTest test
+        run: ./mvnw -B -ntp -pl apps/ms-backoffice -am -Dsurefire.failIfNoSpecifiedTests=false -Dtest=ProblemaFaturaRoutingSc009QualityGateTest test
 
       - name: SC-006 quality gate (trace propagation continuity)
         run: ./mvnw -B -ntp -pl apps/api-gateway,apps/ms-faturas,apps/ms-comprovantes,apps/ms-notificacoes -am -Dsurefire.failIfNoSpecifiedTests=false -Dtest=TracePropagationSc006QualityGateTest test
