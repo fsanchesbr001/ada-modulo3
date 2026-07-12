@@ -2,6 +2,8 @@ openapi: 3.0.3
 info:
   title: ms-comprovantes
   version: 1.0.0
+security:
+  - bearerAuth: []
 paths:
   /api/v1/comprovantes:
     post:
@@ -39,6 +41,11 @@ paths:
         "404":
           description: Comprovante not found
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     ComprovanteCreateRequest:
       type: object

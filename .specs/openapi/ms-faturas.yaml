@@ -2,6 +2,8 @@ openapi: 3.0.3
 info:
   title: ms-faturas.yaml
   version: 1.0.0
+security:
+  - bearerAuth: []
 paths:
   /api/v1/faturas/lote:
     post:
@@ -33,4 +35,9 @@ paths:
       responses:
         "200":
           description: Current fatura state
-components: {}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

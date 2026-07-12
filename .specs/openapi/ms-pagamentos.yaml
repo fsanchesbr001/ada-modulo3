@@ -2,6 +2,8 @@ openapi: 3.0.3
 info:
   title: ms-pagamentos.yaml
   version: 1.0.0
+security:
+  - bearerAuth: []
 paths:
   /api/v1/pagamentos/mock/gateway/lote:
     post:
@@ -9,4 +11,9 @@ paths:
       responses:
         "202":
           description: Mock gateway processing accepted
-components: {}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
